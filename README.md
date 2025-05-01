@@ -38,7 +38,6 @@ source .venv/bin/activate  # Linux/Mac
 
 ```bash
 pip install -e .
-pip install "mcp[cli]" httpx
 ```
 
 4. .env 파일 생성
@@ -50,42 +49,65 @@ echo "WEATHER_API_ENDPOINT=https://apis.data.go.kr/1360000/MidFcstInfoService" >
 
 ## MCP 서버 실행 방법
 
-다음 명령을 사용하여 MCP 서버를 직접 실행할 수 있습니다:
+이 패키지는 여러 방법으로 실행할 수 있습니다:
+
+### 방법 1: 패키지로 직접 실행
 
 ```bash
-python weather_mcp.py
+# 패키지 명령어 사용
+korea-weather-mcp
+```
+
+### 방법 2: 모듈로 실행
+
+```bash
+python -m korea_weather
+```
+
+### 방법 3: 예제 스크립트 사용
+
+examples 디렉토리의 예제 스크립트를 실행할 수 있습니다:
+
+```bash
+# MCP 서버 실행
+python examples/mcp_server.py
+
+# 기본 클라이언트 예제 실행
+python examples/basic_client.py
 ```
 
 ## Claude Desktop에서 사용하기
 
 Claude Desktop에서 이 MCP 서버를 사용하기 위해서는 `claude_desktop_config.json` 파일을 설정해야 합니다.
 
-1. 프로젝트 루트에 `claude_desktop_config.json` 파일을 생성합니다:
+1. 홈 디렉토리에 `claude_desktop_config.json` 파일을 생성합니다:
 
 ```json
 {
   "korea_weather": {
     "command": "python",
-    "args": ["weather_mcp.py"],
-    "cwd": "/경로/KoreaWeatherMCP"
+    "args": ["-m", "korea_weather"],
+    "cwd": "/절대경로/KoreaWeatherMCP",
+    "env": {
+      "WEATHER_API_KEY": "발급받은_서비스키_입력"
+    }
   }
 }
 ```
 
 2. `cwd` 경로를 실제 프로젝트 경로로 변경합니다.
-
-3. Claude Desktop을 다시 시작합니다.
-
-4. Claude Desktop의 MCP 아이콘을 클릭하여 "korea_weather" 서버가 등록되었는지 확인합니다.
+3. `WEATHER_API_KEY` 값을 발급받은 서비스키로 변경합니다.
+4. Claude Desktop을 다시 시작합니다.
+5. Claude Desktop의 MCP 아이콘을 클릭하여 "korea_weather" 서버가 등록되었는지 확인합니다.
 
 ## MCP 서버 기능
 
 MCP 서버는 다음 기능을 제공합니다:
 
-1. **지역코드_조회** - 기상청 중기예보 지역코드 목록 조회
-2. **중기기온_조회** - 특정 지역의 중기기온 조회 (getMidTa API)
-3. **중기육상예보_조회** - 특정 지역의 중기육상예보 조회 (getMidLandFcst API)
-4. **중기해상예보_조회** - 특정 지역의 중기해상예보 조회 (getMidSeaFcst API)
+1. **get_region_codes** - 기상청 중기예보 지역코드 목록 조회
+2. **get_mid_temperature** - 특정 지역의 중기기온 조회 (getMidTa API)
+3. **get_mid_land_forecast** - 특정 지역의 중기육상예보 조회 (getMidLandFcst API)
+4. **get_mid_sea_forecast** - 특정 지역의 중기해상예보 조회 (getMidSeaFcst API)
 
 ## 사용 예시
 
@@ -98,6 +120,32 @@ Claude: 서울 지역의 중기예보를 조회해 드리겠습니다.
 (MCP 서버를 통해 정보를 조회한 후)
 서울 지역의 중기예보는 다음과 같습니다:
 ...
+```
+
+## SSL 호환성 문제 해결
+
+기상청 API 호출 시 SSL 오류가 발생하는 경우, 이 패키지는 자동으로 다음과 같은 설정을 적용합니다:
+
+```python
+ssl_context = ssl.create_default_context()
+ssl_context.set_ciphers("DEFAULT:!TLSv1.3")  # TLSv1.3 비활성화
+ssl_context.options |= ssl.OP_NO_SSLv3  # SSLv3 비활성화
+```
+
+## 패키지 구조
+
+```
+korea_weather/
+├── __init__.py       # 패키지 초기화
+├── __main__.py       # 메인 실행 파일
+├── api.py            # 기상청 API 클라이언트
+├── client.py         # 편리한 클라이언트 인터페이스
+├── constants.py      # 상수 정의 (지역코드 등)
+└── server.py         # MCP 서버 구현
+
+examples/
+├── basic_client.py   # 클라이언트 사용 예제
+└── mcp_server.py     # MCP 서버 실행 예제
 ```
 
 ## 라이센스
