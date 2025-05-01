@@ -2,6 +2,7 @@ from typing import Any, Optional, Dict, Union, List, cast
 import httpx
 from datetime import datetime
 import os
+import sys
 import json
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
@@ -10,7 +11,7 @@ from mcp.server.fastmcp import FastMCP
 load_dotenv()
 
 # MCP 서버 초기화
-mcp = FastMCP("기상청중기예보")
+mcp = FastMCP("KoreaWeatherForecast")
 
 # API 설정
 WEATHER_API_KEY = os.getenv('WEATHER_API_KEY', '')
@@ -59,6 +60,9 @@ REGION_CODES = {
     }
 }
 
+# 로그 출력 함수 정의 - stderr로 출력
+def log(message):
+    print(message, file=sys.stderr, flush=True)
 
 def get_tmFc_now():
     """현재 시간에 적합한 발표시각 생성"""
@@ -92,7 +96,7 @@ async def make_api_request(service_url, params):
     url = f"{WEATHER_API_ENDPOINT}/{service_url}"
     
     # 로그 출력
-    print(f"API 요청: {url} - 파라미터: {json.dumps(params)}")
+    log(f"API 요청: {url} - 파라미터: {json.dumps(params)}")
     
     async with httpx.AsyncClient() as client:
         try:
@@ -101,20 +105,20 @@ async def make_api_request(service_url, params):
             data = response.json()
             
             # 디버깅을 위한 로그
-            print(f"API 응답: {json.dumps(data, ensure_ascii=False)[:300]}...")
+            log(f"API 응답: {json.dumps(data, ensure_ascii=False)[:300]}...")
             
             return data
         except Exception as e:
             # 오류 로그 
-            print(f"API 요청 실패: {str(e)}")
+            log(f"API 요청 실패: {str(e)}")
             return {"error": str(e)}
 
 
 @mcp.tool()
-async def 지역코드_조회() -> str:
+async def get_region_codes() -> str:
     """기상청 중기예보 지역코드 목록 조회"""
     
-    print("지역코드 조회 요청됨")
+    log("지역코드 조회 요청됨")
     
     result = "## 기상청 중기예보 지역코드 목록\n\n"
     
@@ -137,7 +141,7 @@ async def 지역코드_조회() -> str:
 
 
 @mcp.tool()
-async def 중기기온_조회(region_id: str, tmFc: Optional[str] = None) -> str:
+async def get_mid_temperature(region_id: str, tmFc: Optional[str] = None) -> str:
     """중기기온 조회 (getMidTa)
     
     Args:
@@ -148,7 +152,7 @@ async def 중기기온_조회(region_id: str, tmFc: Optional[str] = None) -> str
     if not tmFc:
         tmFc = get_tmFc_now()
     
-    print(f"중기기온 조회 요청: 지역={region_id}, 발표시각={tmFc}")
+    log(f"중기기온 조회 요청: 지역={region_id}, 발표시각={tmFc}")
     
     # API 호출
     result = await make_api_request('getMidTa', {
@@ -157,7 +161,7 @@ async def 중기기온_조회(region_id: str, tmFc: Optional[str] = None) -> str
     })
     
     if 'error' in result:
-        print(f"API 오류: {result['error']}")
+        log(f"API 오류: {result['error']}")
         return f"오류가 발생했습니다: {result['error']}"
     
     try:
@@ -199,12 +203,12 @@ async def 중기기온_조회(region_id: str, tmFc: Optional[str] = None) -> str
         return result_str
         
     except Exception as e:
-        print(f"데이터 처리 오류: {str(e)}")
+        log(f"데이터 처리 오류: {str(e)}")
         return f"데이터 처리 중 오류가 발생했습니다: {str(e)}"
 
 
 @mcp.tool()
-async def 중기육상예보_조회(region_id: str, tmFc: Optional[str] = None) -> str:
+async def get_mid_land_forecast(region_id: str, tmFc: Optional[str] = None) -> str:
     """중기육상예보 조회 (getMidLandFcst)
     
     Args:
@@ -215,7 +219,7 @@ async def 중기육상예보_조회(region_id: str, tmFc: Optional[str] = None) 
     if not tmFc:
         tmFc = get_tmFc_now()
     
-    print(f"중기육상예보 조회 요청: 지역={region_id}, 발표시각={tmFc}")
+    log(f"중기육상예보 조회 요청: 지역={region_id}, 발표시각={tmFc}")
     
     # API 호출
     result = await make_api_request('getMidLandFcst', {
@@ -272,12 +276,12 @@ async def 중기육상예보_조회(region_id: str, tmFc: Optional[str] = None) 
         return result_str
         
     except Exception as e:
-        print(f"데이터 처리 오류: {str(e)}")
+        log(f"데이터 처리 오류: {str(e)}")
         return f"데이터 처리 중 오류가 발생했습니다: {str(e)}"
 
 
 @mcp.tool()
-async def 중기해상예보_조회(region_id: str, tmFc: Optional[str] = None) -> str:
+async def get_mid_sea_forecast(region_id: str, tmFc: Optional[str] = None) -> str:
     """중기해상예보 조회 (getMidSeaFcst)
     
     Args:
@@ -288,7 +292,7 @@ async def 중기해상예보_조회(region_id: str, tmFc: Optional[str] = None) 
     if not tmFc:
         tmFc = get_tmFc_now()
     
-    print(f"중기해상예보 조회 요청: 지역={region_id}, 발표시각={tmFc}")
+    log(f"중기해상예보 조회 요청: 지역={region_id}, 발표시각={tmFc}")
     
     # API 호출
     result = await make_api_request('getMidSeaFcst', {
@@ -345,11 +349,11 @@ async def 중기해상예보_조회(region_id: str, tmFc: Optional[str] = None) 
         return result_str
         
     except Exception as e:
-        print(f"데이터 처리 오류: {str(e)}")
+        log(f"데이터 처리 오류: {str(e)}")
         return f"데이터 처리 중 오류가 발생했습니다: {str(e)}"
 
 
 if __name__ == "__main__":
     # 서버 실행
-    print("기상청 중기예보 MCP 서버를 시작합니다...")
+    log("기상청 중기예보 MCP 서버를 시작합니다...")
     mcp.run(transport='stdio') 
