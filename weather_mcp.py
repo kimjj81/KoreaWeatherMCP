@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import sys
 import json
+import ssl
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
@@ -98,7 +99,12 @@ async def make_api_request(service_url, params):
     # 로그 출력
     log(f"API 요청: {url} - 파라미터: {json.dumps(params)}")
     
-    async with httpx.AsyncClient() as client:
+    # SSL 컨텍스트 설정
+    ssl_context = ssl.create_default_context()
+    ssl_context.set_ciphers("DEFAULT:!TLSv1.3")  # TLSv1.3 비활성화
+    ssl_context.options |= ssl.OP_NO_SSLv3  # SSLv3 비활성화
+    
+    async with httpx.AsyncClient(verify=ssl_context) as client:
         try:
             response = await client.get(url, params=default_params, timeout=30.0)
             response.raise_for_status()
