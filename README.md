@@ -47,6 +47,46 @@ echo "WEATHER_API_KEY=발급받은_서비스키_입력" > .env
 echo "WEATHER_API_ENDPOINT=https://apis.data.go.kr/1360000/MidFcstInfoService" >> .env
 ```
 
+### 패키지로 설치하기
+
+이 프로젝트를 Python 패키지로 설치하여 어디서든 사용할 수 있습니다.
+
+#### 개발 모드로 설치 (소스 코드 변경 시 바로 반영)
+
+```bash
+# 저장소 디렉토리 내에서
+source .venv/bin/activate  # 가상환경 활성화
+pip install -e .
+```
+
+설치 후에는 `korea-weather-mcp` 명령어를 직접 사용하거나 Python 코드에서 모듈을 임포트할 수 있습니다.
+
+#### 배포용 패키지 빌드
+
+패키지를 빌드하여 배포하려면:
+
+```bash
+# 필요한 도구 설치
+pip install build
+
+# 패키지 빌드
+python -m build
+```
+
+빌드가 완료되면 `dist/` 디렉토리에 다음 파일들이 생성됩니다:
+- `korea_weather_mcp-0.1.0-py3-none-any.whl` (휠 패키지)
+- `korea-weather-mcp-0.1.0.tar.gz` (소스 배포 파일)
+
+#### 빌드된 패키지 설치
+
+빌드된 패키지를 직접 설치하려면:
+
+```bash
+pip install dist/korea_weather_mcp-0.1.0-py3-none-any.whl
+```
+
+이렇게 설치하면 `korea-weather-mcp` 명령어를 어디서든 사용할 수 있습니다.
+
 ## MCP 서버 실행 방법
 
 이 패키지는 여러 방법으로 실행할 수 있습니다:
@@ -84,21 +124,50 @@ Claude Desktop에서 이 MCP 서버를 사용하기 위해서는 `claude_desktop
 
 ```json
 {
-  "korea_weather": {
-    "command": "python",
-    "args": ["-m", "korea_weather"],
-    "cwd": "/절대경로/KoreaWeatherMCP",
-    "env": {
-      "WEATHER_API_KEY": "발급받은_서비스키_입력"
+  "mcpServers": {
+    "korea_weather": {
+      "command": "python",
+      "args": ["-m", "korea_weather"],
+      "cwd": "/절대경로/KoreaWeatherMCP",
+      "env": {
+        "WEATHER_API_KEY": "발급받은_서비스키_입력"
+      }
     }
   }
 }
 ```
 
-2. `cwd` 경로를 실제 프로젝트 경로로 변경합니다.
+또는 패키지로 설치한 경우 다음과 같이 설정할 수 있습니다:
+
+```json
+{
+  "mcpServers": {
+    "korea_weather": {
+      "command": "korea-weather-mcp",
+      "env": {
+        "WEATHER_API_KEY": "발급받은_서비스키_입력"
+      }
+    }
+  }
+}
+```
+
+2. `cwd` 경로를 실제 프로젝트 경로로 변경합니다 (패키지 설치 시에는 필요 없음).
 3. `WEATHER_API_KEY` 값을 발급받은 서비스키로 변경합니다.
 4. Claude Desktop을 다시 시작합니다.
 5. Claude Desktop의 MCP 아이콘을 클릭하여 "korea_weather" 서버가 등록되었는지 확인합니다.
+
+### 설정 파일의 위치
+
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
+### 오류 해결
+
+서버가 연결되지 않는 경우 다음 로그 파일을 확인하세요:
+
+- macOS: `~/Library/Logs/Claude/mcp*.log`
+- Windows: `%APPDATA%\Claude\logs\mcp*.log`
 
 ## MCP 서버 기능
 
